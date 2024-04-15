@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wenku/global.dart';
+import 'package:wenku8/global.dart';
 
 class SingleSelectDialogTile extends StatefulWidget {
   final Widget title;

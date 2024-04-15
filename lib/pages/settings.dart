@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import 'package:wenku/global.dart';
-import 'package:wenku/main.dart';
-import 'package:wenku/widgets/page/stateful_page.dart';
-import 'package:wenku/widgets/setting/single_select_dialog_tile.dart';
+import 'package:wenku8/global.dart';
+import 'package:wenku8/main.dart';
+import 'package:wenku8/widgets/page/stateful_page.dart';
+import 'package:wenku8/widgets/setting/single_select_dialog_tile.dart';
 
 final themeOptions = {
   "light": "淺色",

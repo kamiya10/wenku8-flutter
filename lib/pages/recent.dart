@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:wenku/api/wenku8.dart';
-import 'package:wenku/models/novel.dart';
-import 'package:wenku/pages/novel.dart';
-import 'package:wenku/utils/extensions/build_context.dart';
-import 'package:wenku/widgets/page/stateful_page.dart';
+import 'package:wenku8/api/wenku8.dart';
+import 'package:wenku8/models/novel.dart';
+import 'package:wenku8/pages/novel.dart';
+import 'package:wenku8/utils/extensions/build_context.dart';
+import 'package:wenku8/widgets/page/stateful_page.dart';
 
 class RecentPage extends StatefulPage {
   const RecentPage({super.key});

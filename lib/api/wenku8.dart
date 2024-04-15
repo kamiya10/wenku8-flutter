@@ -1,10 +1,9 @@
 import 'dart:collection';
 import 'dart:convert';
 
-import 'package:wenku/api/light_network.dart';
-import 'package:wenku/models/chapter.dart';
-import 'package:wenku/models/novel.dart';
-import 'package:wenku/models/volume.dart';
+import 'package:wenku8/api/light_network.dart';
+import 'package:wenku8/models/novel.dart';
+import 'package:wenku8/models/volume.dart';
 import 'package:xml/xml.dart';
 
 enum NovelSortBy {

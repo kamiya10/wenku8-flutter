@@ -1,14 +1,12 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
-import 'package:flutter/widgets.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import 'package:wenku/global.dart';
-import 'package:wenku/pages/favorites.dart';
-import 'package:wenku/pages/recent.dart';
-import 'package:wenku/pages/settings.dart';
-import 'package:wenku/pages/trending.dart';
-import 'package:wenku/widgets/page/stateful_page.dart';
+import 'package:wenku8/global.dart';
+import 'package:wenku8/pages/favorites.dart';
+import 'package:wenku8/pages/recent.dart';
+import 'package:wenku8/pages/settings.dart';
+import 'package:wenku8/pages/trending.dart';
+import 'package:wenku8/widgets/page/stateful_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

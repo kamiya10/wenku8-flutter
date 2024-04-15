@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wenku/widgets/page/stateful_page.dart';
+import 'package:wenku8/widgets/page/stateful_page.dart';
 
 class FavoritesPage extends StatefulPage {
   const FavoritesPage({super.key});

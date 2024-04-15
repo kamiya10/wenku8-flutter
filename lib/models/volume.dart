@@ -1,4 +1,4 @@
-import 'package:wenku/models/chapter.dart';
+import 'package:wenku8/models/chapter.dart';
 import 'package:xml/xml.dart';
 
 class Volume {
