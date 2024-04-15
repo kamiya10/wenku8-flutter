@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:wenku8/api/wenku8.dart';
 import 'package:wenku8/models/novel.dart';
+import 'package:wenku8/pages/image_viewer.dart';
 import 'package:wenku8/utils/extensions/build_context.dart';
 
 class NovelPage extends StatelessWidget {
@@ -38,15 +39,47 @@ class NovelPage extends StatelessWidget {
                     tag: "novel_thumbnail_${novel.id}",
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(
-                        width: 66.66666667,
-                        height: 100,
-                        imageUrl: Wenku8Api.getCoverURL(novel.id),
-                        progressIndicatorBuilder: (context, url, downloadProgress) {
-                          return Center(child: CircularProgressIndicator(value: downloadProgress.progress));
-                        },
-                        fit: BoxFit.cover,
-                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Stack(children: [
+                        CachedNetworkImage(
+                          width: 66.66666667,
+                          height: 100,
+                          imageUrl: Wenku8Api.getCoverURL(novel.id),
+                          progressIndicatorBuilder: (context, url, downloadProgress) {
+                            return Center(child: CircularProgressIndicator(value: downloadProgress.progress));
+                          },
+                          fit: BoxFit.cover,
+                        ),
+                        Positioned.fill(
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) {
+                                      return ImageViewer(
+                                        child: Hero(
+                                          tag: "novel_thumbnail_${novel.id}",
+                                          child: CachedNetworkImage(
+                                            imageUrl: Wenku8Api.getCoverURL(novel.id),
+                                            progressIndicatorBuilder: (context, url, downloadProgress) {
+                                              return Center(
+                                                  child: CircularProgressIndicator(value: downloadProgress.progress));
+                                            },
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ]),
                     ),
                   ),
                   const SizedBox(width: 12),
