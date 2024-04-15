@@ -1,3 +1,3 @@
-# wenku
+# wenku8-flutter
 
-A new Flutter project.
+This project is a fork of https://github.com/MewX/light-novel-library_Wenku8_Android rewritten in dart with Flutter.
