@@ -1,7 +1,6 @@
-import 'dart:collection';
 import 'dart:convert';
 
-import 'package:wenku8/api/light_network.dart';
+import 'package:http/http.dart';
 import 'package:wenku8/models/novel.dart';
 import 'package:wenku8/models/volume.dart';
 import 'package:xml/xml.dart';
@@ -35,23 +34,16 @@ class Wenku8Api {
   static const String baseUrl = "http://app.wenku8.com/android.php";
   static const String relayUrl = "https://wenku8-relay.mewx.org/";
 
-  // This part are the old API writing ways.
-  // It's not efficient enough, and maybe bug-hidden.
-  static Map<String, String> getEncryptedMap(String str) {
-    print("getEncryptedMap -> $str");
-
-    Map<String, String> params = HashMap();
-    params["appver"] = "1.18.0"; // DateTime.now().millisecondsSinceEpoch
-    params["request"] = base64Encode(utf8.encode(str));
-    params["timetoken"] = "${DateTime.now().millisecondsSinceEpoch}";
-    return params;
+  static String getRequestString(String request) {
+    final base64Request = base64Encode(utf8.encode(request));
+    return "appver=1.0&request=$base64Request&timetoken=${DateTime.now().millisecondsSinceEpoch}";
   }
 
   static String getCoverURL(int id) {
     return "http://img.wenku8.com/image/${(id / 1000).floor()}/$id/${id}s.jpg";
   }
 
-  static Future getNovelList(NovelSortBy sortBy, int page) {
+  static Future getNovelList(NovelSortBy sortBy, int page) async {
     // here get a specific list of novels, sorted by NOVELSORTBY
     // ---------------------------------------------------------
     // <?xml version="1.0" encoding="utf-8"?>
@@ -69,10 +61,19 @@ class Wenku8Api {
     // <item aid='374'/>
     // </result>
 
-    return LightNetwork.lightHttpPostConnection(
-      relayUrl,
-      getEncryptedMap("action=articlelist&sort=${sortBy.value}&page=$page"),
+    var requestString = getRequestString("action=articlelist&sort=${sortBy.value}&page=$page");
+
+    final res = await post(
+      Uri.parse(Wenku8Api.relayUrl),
+      body: requestString,
     );
+
+    if (res.statusCode != 200) {
+      print("Request string is $requestString");
+      throw "The server responded with status code ${res.statusCode}";
+    }
+
+    return res.body;
   }
 
   static Future<List<Novel>> getNovelListWithInfo(NovelSortBy sortBy, int page) async {
@@ -94,13 +95,25 @@ class Wenku8Api {
     // </item>
     // ...... ......
     // </result>
-
+/* 
     final data = await LightNetwork.lightHttpPostConnection(
       relayUrl,
       getEncryptedMap("action=novellist&sort=${sortBy.value}&page=$page&t=1"),
+    ); */
+
+    final requestString = getRequestString("action=novellist&sort=${sortBy.value}&page=$page&t=1");
+
+    final res = await post(
+      Uri.parse(Wenku8Api.relayUrl),
+      body: requestString,
     );
 
-    final doc = XmlDocument.parse(data);
+    if (res.statusCode != 200) {
+      print("Request string is $requestString");
+      throw "The server responded with status code ${res.statusCode}";
+    }
+
+    final doc = XmlDocument.parse(res.body);
     List<Novel> novels = [];
 
     for (var p0 in doc.childElements) {
@@ -114,7 +127,7 @@ class Wenku8Api {
     return novels;
   }
 
-  static Future getNovelFullIntro(int id) async {
+  static Future<List<String>> getNovelFullIntro(int id) async {
     // get full XML intro of a novel, here is an example:
     // --------------------------------------------------
     // 　　在劍與魔法作為一股強大力量的世界裡，克雷歐過著只有繪畫是唯一生存意義的孤獨生活。
@@ -124,14 +137,24 @@ class Wenku8Api {
     // 　　兩人從此展開不可思議的同居時光，這樣的生活令他感到很安心。
     // 　　但平靜的日子沒有持續太久……
     // 　　描繪人與魔物的戀情，溫暖人心的奇幻故事。
-    String data = await LightNetwork.lightHttpPostConnection(
-      relayUrl,
-      getEncryptedMap("action=book&do=intro&aid=$id&t=1"),
+
+    final requestString = getRequestString("action=book&do=intro&aid=$id&t=1");
+
+    final res = await post(
+      Uri.parse(Wenku8Api.baseUrl),
+      headers: {"content-type": "application/x-www-form-urlencoded"},
+      body: requestString,
     );
-    return data;
+
+    if (res.statusCode != 200) {
+      print("Request string is $requestString");
+      throw "The server responded with status code ${res.statusCode}";
+    }
+
+    return res.body.split("\n");
   }
 
-  static Future getNovelFullMeta(int id) {
+  static Future getNovelFullMeta(int id) async {
     // get full XML metadata of a novel, here is an example:
     // -----------------------------------------------------
     // <?xml version="1.0" encoding="utf-8"?>
@@ -149,10 +172,21 @@ class Wenku8Api {
     // <data name="LastUpdate" value="2012-11-02"/>
     // <data name="LatestSection" cid="41897"><![CDATA[第一卷 插图]]></data>
     // </metadata>
-    return LightNetwork.lightHttpPostConnection(
-      relayUrl,
-      getEncryptedMap("action=book&do=meta&aid=$id&t=1"),
+
+    var requestString = getRequestString("action=book&do=meta&aid=$id&t=1");
+
+    final res = await post(
+      Uri.parse(Wenku8Api.baseUrl),
+      headers: {"content-type": "application/x-www-form-urlencoded"},
+      body: requestString,
     );
+
+    if (res.statusCode != 200) {
+      print("Request string is $requestString");
+      throw "The server responded with status code ${res.statusCode}";
+    }
+
+    return res.body;
   }
 
   static Future<List<Volume>> getNovelVolumes(int id) async {
@@ -188,12 +222,23 @@ class Wenku8Api {
     // </volume>
     // ...... ......
     // </package>
-    String data = await LightNetwork.lightHttpPostConnection(
-      relayUrl,
-      getEncryptedMap("action=book&do=list&aid=$id&t=1"),
+
+    final requestString = getRequestString("action=book&do=list&aid=$id&t=1");
+    print("Request string is $requestString");
+
+    final res = await post(
+      Uri.parse(Wenku8Api.baseUrl),
+      headers: {"content-type": "application/x-www-form-urlencoded"},
+      body: requestString,
     );
 
-    final doc = XmlDocument.parse(data);
+    res.headers["content-type"] = "application/xml; charset=utf-8";
+
+    if (res.statusCode != 200) {
+      throw "The server responded with status code ${res.statusCode}";
+    }
+
+    final doc = XmlDocument.parse(res.body);
     List<Volume> volumes = [];
 
     for (var p0 in doc.childElements) {
@@ -207,7 +252,7 @@ class Wenku8Api {
     return volumes;
   }
 
-  static Future getNovelContent(int id, int cid) {
+  static Future<String> getNovelContent(int id, int cid) async {
     // get full content of an article of a novel,
     // the images should be processed then, here is an example:
     // --------------------------------------------------------
@@ -217,9 +262,20 @@ class Wenku8Api {
     // <!--image-->http://pic.wenku8.cn/pictures/1/1305/41759/50472.jpg<!--image-->
     // <!--image-->http://pic.wenku8.cn/pictures/1/1305/41759/50473.jpg<!--image-->
     // ...... ......
-    return LightNetwork.lightHttpPostConnection(
-      relayUrl,
-      getEncryptedMap("action=book&do=text&aid=$id&cid=$cid&t=1"),
+
+    var requestString = getRequestString("action=book&do=text&aid=$id&cid=$cid&t=1");
+
+    final res = await post(
+      Uri.parse(Wenku8Api.baseUrl),
+      headers: {"content-type": "application/x-www-form-urlencoded"},
+      body: requestString,
     );
+
+    if (res.statusCode != 200) {
+      print("Request string is $requestString");
+      throw "The server responded with status code ${res.statusCode}";
+    }
+
+    return res.body.split("\n").map((p) => p.trimRight()).join("\n").replaceAll("\n\n", "\n");
   }
 }

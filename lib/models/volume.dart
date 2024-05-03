@@ -16,6 +16,6 @@ class Volume {
       chapters.add(Chapter.fromXml(p0));
     }
 
-    return Volume(id: id, name: xml.innerText, chapters: chapters);
+    return Volume(id: id, name: xml.innerText.split("\n").first, chapters: chapters);
   }
 }

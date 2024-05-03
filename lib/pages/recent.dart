@@ -78,15 +78,8 @@ class _RecentPageState extends State<RecentPage> with AutomaticKeepAliveClientMi
   Widget build(BuildContext context) {
     super.build(context);
 
-    final titleTextStyle = TextStyle(
-      color: context.colors.primary,
-      fontSize: 16,
-    );
-
-    final detailTextStyle = TextStyle(
-      color: context.colors.onSurfaceVariant,
-      fontSize: 14,
-    );
+    final titleTextStyle = context.theme.textTheme.titleMedium!.copyWith(color: context.colors.primary);
+    final detailTextStyle = context.theme.textTheme.bodyMedium!.copyWith(color: context.colors.onSurfaceVariant);
 
     return initLoadData.isCompleted
         ? ListView.builder(
@@ -96,6 +89,7 @@ class _RecentPageState extends State<RecentPage> with AutomaticKeepAliveClientMi
             itemBuilder: (context, index) {
               return Card(
                 elevation: 4,
+                shadowColor: Colors.transparent,
                 clipBehavior: Clip.antiAlias,
                 margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                 child: InkWell(
@@ -104,7 +98,10 @@ class _RecentPageState extends State<RecentPage> with AutomaticKeepAliveClientMi
                       context,
                       PageRouteBuilder(
                         pageBuilder: (context, animation, secondaryAnimatio) {
-                          return NovelPage(novel: novels[index]);
+                          return NovelPage(
+                              titleHeroTag: "novel_thumbnail_${novels[index].id}_$index",
+                              thumbnailHeroTag: "novel_title_${novels[index].id}_$index",
+                              novel: novels[index]);
                         },
                         transitionsBuilder: (context, animation, secondaryAnimation, child) {
                           const begin = 0.0;
@@ -126,7 +123,7 @@ class _RecentPageState extends State<RecentPage> with AutomaticKeepAliveClientMi
                     child: Row(
                       children: [
                         Hero(
-                          tag: "novel_thumbnail_${novels[index].id}",
+                          tag: "novel_thumbnail_${novels[index].id}_$index",
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child: CachedNetworkImage(
@@ -149,7 +146,7 @@ class _RecentPageState extends State<RecentPage> with AutomaticKeepAliveClientMi
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Hero(
-                                tag: "novel_title_${novels[index].id}",
+                                tag: "novel_title_${novels[index].id}_$index",
                                 child: Material(
                                   color: Colors.transparent,
                                   child: Text(
