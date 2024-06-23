@@ -1,11 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wenku8/api/wenku8.dart';
 import 'package:wenku8/models/novel.dart';
 import 'package:wenku8/pages/novel.dart';
-import 'package:wenku8/utils/extensions/build_context.dart';
+import 'package:wenku8/widgets/novel/novel_item.dart';
 import 'package:wenku8/widgets/page/stateful_page.dart';
 
 class RecentPage extends StatefulPage {
@@ -78,71 +77,74 @@ class _RecentPageState extends State<RecentPage> with AutomaticKeepAliveClientMi
   Widget build(BuildContext context) {
     super.build(context);
 
-    final titleTextStyle = context.theme.textTheme.titleMedium!.copyWith(color: context.colors.primary);
-    final detailTextStyle = context.theme.textTheme.bodyMedium!.copyWith(color: context.colors.onSurfaceVariant);
-
     return initLoadData.isCompleted
         ? ListView.builder(
             shrinkWrap: true,
             controller: _scrollController,
             itemCount: novels.length,
             itemBuilder: (context, index) {
+              final novel = novels[index];
+              return NovelItem(
+                heroTag: "${index}_novel_${novel.id}",
+                novel: novel,
+                showHitsCount: true,
+                showPushCount: true,
+                showFavoriteCount: true,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimatio) {
+                        return NovelPage(
+                          heroTag: "${index}_novel_${novel.id}",
+                          novel: novels[index],
+                        );
+                      },
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        const begin = 0.0;
+                        const end = 1.0;
+
+                        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: Curves.ease));
+
+                        return FadeTransition(
+                          opacity: animation.drive(tween),
+                          child: child,
+                        );
+                      },
+                    ),
+                  );
+                },
+              );
+              /*
               return Card(
                 elevation: 4,
                 shadowColor: Colors.transparent,
                 clipBehavior: Clip.antiAlias,
                 margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                 child: InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimatio) {
-                          return NovelPage(
-                              titleHeroTag: "novel_thumbnail_${novels[index].id}_$index",
-                              thumbnailHeroTag: "novel_title_${novels[index].id}_$index",
-                              novel: novels[index]);
-                        },
-                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                          const begin = 0.0;
-                          const end = 1.0;
-                          const curve = Curves.ease;
-
-                          var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-
-                          return FadeTransition(
-                            opacity: animation.drive(tween),
-                            child: child,
-                          );
-                        },
-                      ),
-                    );
-                  },
+                  ,
                   child: Padding(
                     padding: const EdgeInsets.all(8),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Hero(
                           tag: "novel_thumbnail_${novels[index].id}_$index",
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: CachedNetworkImage(
-                              width: 66.66666667,
-                              height: 100,
-                              imageUrl: Wenku8Api.getCoverURL(novels[index].id),
-                              progressIndicatorBuilder: (context, url, downloadProgress) {
-                                return Center(
-                                  child: CircularProgressIndicator(value: downloadProgress.progress),
-                                );
-                              },
-                              fit: BoxFit.cover,
-                            ),
+                          child: CachedNetworkImage(
+                            width: (100 / 3) * 2,
+                            height: 100,
+                            imageUrl: Wenku8Api.getCoverURL(novels[index].id),
+                            progressIndicatorBuilder: (context, url, downloadProgress) {
+                              return Center(
+                                child: CircularProgressIndicator(value: downloadProgress.progress),
+                              );
+                            },
+                            fit: BoxFit.cover,
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
-                            mainAxisSize: MainAxisSize.max,
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Hero(
@@ -179,6 +181,7 @@ class _RecentPageState extends State<RecentPage> with AutomaticKeepAliveClientMi
                   ),
                 ),
               );
+              */
             },
           )
         : const Center(child: CircularProgressIndicator());

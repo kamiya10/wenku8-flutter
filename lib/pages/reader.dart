@@ -1,6 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:wenku8/api/wenku8.dart';
+import 'package:wenku8/pages/image_viewer.dart';
 import 'package:wenku8/utils/extensions/build_context.dart';
+
+final imageRegex = RegExp(r"(?<=<!--image-->)(\S*?)(?=<!--image-->)");
 
 class Reader extends StatefulWidget {
   final int id;
@@ -14,6 +18,8 @@ class Reader extends StatefulWidget {
 }
 
 class _ReaderState extends State<Reader> {
+  ScrollController contentListViewController = ScrollController();
+
   Future<List<String>> getContents() async {
     final data = await Wenku8Api.getNovelContent(widget.id, widget.cid);
     return data.split("\n");
@@ -42,8 +48,69 @@ class _ReaderState extends State<Reader> {
               final data = snapshot.data!;
 
               return ListView.builder(
+                controller: contentListViewController,
                 itemCount: data.length,
                 itemBuilder: (context, index) {
+                  if (imageRegex.hasMatch(data[index])) {
+                    List<Widget> w = [];
+
+                    for (final Match m in imageRegex.allMatches(data[index])) {
+                      String match = m[0]!;
+                      String name = match.substring(match.lastIndexOf("/") + 1);
+
+                      w.add(Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Stack(
+                            children: [
+                              SizedBox(
+                                child: Hero(
+                                  tag: "illust_${widget.cid}_$name",
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: CachedNetworkImage(
+                                      imageUrl: match,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned.fill(
+                                child: InkWell(
+                                  onTap: () {
+                                    Navigator.push(context, MaterialPageRoute(
+                                      builder: (context) {
+                                        return ImageViewer(
+                                          child: Hero(
+                                            tag: "illust_${widget.cid}_$name",
+                                            child: ClipRRect(
+                                              borderRadius: BorderRadius.zero,
+                                              child: CachedNetworkImage(
+                                                imageUrl: match,
+                                                progressIndicatorBuilder: (context, url, downloadProgress) {
+                                                  return Center(
+                                                    child: CircularProgressIndicator(value: downloadProgress.progress),
+                                                  );
+                                                },
+                                                fit: BoxFit.contain,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ));
+                                  },
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                      ));
+                    }
+                    return Column(children: w);
+                  }
+
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     child: Text(

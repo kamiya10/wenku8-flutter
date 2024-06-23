@@ -1,3 +1,4 @@
+import 'package:wenku8/api/wenku8.dart';
 import 'package:xml/xml.dart';
 
 class Novel {
@@ -57,4 +58,6 @@ class Novel {
     }
     return n;
   }
+
+  String get thumbnailUrl => Wenku8Api.getCoverURL(id);
 }

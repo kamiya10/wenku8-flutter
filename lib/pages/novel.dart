@@ -1,122 +1,66 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:wenku8/api/wenku8.dart';
+import 'package:wenku8/global.dart';
 import 'package:wenku8/models/chapter.dart';
 import 'package:wenku8/models/novel.dart';
-import 'package:wenku8/pages/image_viewer.dart';
+import 'package:wenku8/models/volume.dart';
 import 'package:wenku8/pages/reader.dart';
 import 'package:wenku8/utils/extensions/build_context.dart';
+import 'package:wenku8/widgets/novel/novel_item.dart';
 
-class NovelPage extends StatelessWidget {
+class NovelPage extends StatefulWidget {
   final Novel novel;
-  final String titleHeroTag;
-  final String thumbnailHeroTag;
+  final String heroTag;
 
-  const NovelPage({super.key, required this.novel, required this.titleHeroTag, required this.thumbnailHeroTag});
+  const NovelPage({super.key, required this.novel, required this.heroTag});
+
+  @override
+  State<NovelPage> createState() => _NovelPageState();
+}
+
+class _NovelPageState extends State<NovelPage> {
+  Map<int, bool> expandedVolume = {};
+
+  Completer<List<String>> novelFullIntro = Completer();
+  Completer<List<Volume>> novelVolumes = Completer();
+
+  Future<List<String>> fetchNovelFullIntro() async {
+    final data = await Wenku8Api.getNovelFullIntro(widget.novel.id);
+    novelFullIntro.complete(data);
+    return data;
+  }
+
+  Future<List<Volume>> fetchNovelVolumes() async {
+    final data = await Wenku8Api.getNovelVolumes(widget.novel.id);
+    novelVolumes.complete(data);
+    return data;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchNovelFullIntro();
+    fetchNovelVolumes();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final titleTextStyle = context.theme.textTheme.titleMedium!.copyWith(color: context.colors.primary);
     final detailTextStyle = context.theme.textTheme.bodyMedium!.copyWith(color: context.colors.onSurfaceVariant);
+    int? lastReadChapterId = Global.preferences.getInt("last_read:${widget.novel.id}");
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(novel.title!),
+        title: Text(widget.novel.title!),
       ),
       body: ListView(
         children: [
-          Card(
-            elevation: 4,
-            shadowColor: Colors.transparent,
-            margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    clipBehavior: Clip.antiAlias,
-                    child: Stack(children: [
-                      Hero(
-                        tag: thumbnailHeroTag,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: CachedNetworkImage(
-                            width: 66.66666667,
-                            height: 100,
-                            imageUrl: Wenku8Api.getCoverURL(novel.id),
-                            progressIndicatorBuilder: (context, url, downloadProgress) {
-                              return Center(
-                                child: CircularProgressIndicator(value: downloadProgress.progress),
-                              );
-                            },
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      Positioned.fill(
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) {
-                                    return ImageViewer(
-                                      child: Hero(
-                                        tag: thumbnailHeroTag,
-                                        child: CachedNetworkImage(
-                                          imageUrl: Wenku8Api.getCoverURL(novel.id),
-                                          progressIndicatorBuilder: (context, url, downloadProgress) {
-                                            return Center(
-                                                child: CircularProgressIndicator(value: downloadProgress.progress));
-                                          },
-                                          fit: BoxFit.contain,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    ]),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.max,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Hero(
-                          tag: titleHeroTag,
-                          child: Material(
-                            color: Colors.transparent,
-                            child: Text(
-                              novel.title!,
-                              style: titleTextStyle,
-                            ),
-                          ),
-                        ),
-                        const Divider(height: 6),
-                        Text(
-                          "作者：${novel.author!}",
-                          style: detailTextStyle,
-                        ),
-                        Text(
-                          "連載狀態：${novel.status!}",
-                          style: detailTextStyle,
-                        ),
-                      ],
-                    ),
-                  )
-                ],
-              ),
-            ),
+          NovelItem(
+            heroTag: widget.heroTag,
+            novel: widget.novel,
+            showAuthor: true,
+            titleOverflow: TextOverflow.visible,
           ),
           Card(
             shadowColor: Colors.transparent,
@@ -134,7 +78,7 @@ class NovelPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   FutureBuilder(
-                    future: Wenku8Api.getNovelFullIntro(novel.id),
+                    future: novelFullIntro.future,
                     builder: (context, snapshot) {
                       if (snapshot.hasData) {
                         return Column(
@@ -144,7 +88,12 @@ class NovelPage extends StatelessWidget {
                           }).toList(),
                         );
                       } else {
-                        return const Center(child: CircularProgressIndicator());
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(8),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
                       }
                     },
                   ),
@@ -153,7 +102,7 @@ class NovelPage extends StatelessWidget {
             ),
           ),
           FutureBuilder(
-            future: Wenku8Api.getNovelVolumes(novel.id),
+            future: novelVolumes.future,
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 List<Widget> v = [];
@@ -168,28 +117,68 @@ class NovelPage extends StatelessWidget {
                         clipBehavior: Clip.antiAlias,
                         shadowColor: Colors.transparent,
                         child: InkWell(
-                          onTap: () {
-                            Navigator.push(context, MaterialPageRoute(
+                          onTap: () async {
+                            await Navigator.push(context, MaterialPageRoute(
                               builder: (context) {
                                 return Reader(
-                                  id: novel.id,
+                                  id: widget.novel.id,
                                   cid: chapter.id,
                                   title: chapter.name,
                                 );
                               },
                             ));
+
+                            if (chapter.name == "插圖") return;
+
+                            setState(() {
+                              lastReadChapterId = chapter.id;
+                              Global.preferences.setInt("last_read:${widget.novel.id}", chapter.id);
+                            });
                           },
                           child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Text(chapter.name),
+                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (lastReadChapterId == chapter.id)
+                                  Container(
+                                    margin: const EdgeInsets.only(bottom: 4),
+                                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
+                                    decoration: BoxDecoration(
+                                      color: context.colors.secondaryContainer,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      "最後閱讀",
+                                      style: TextStyle(
+                                        height: 1,
+                                        color: context.colors.onSecondaryContainer,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                Text(
+                                  chapter.name,
+                                  style: lastReadChapterId == chapter.id
+                                      ? context.theme.textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold)
+                                      : context.theme.textTheme.titleSmall,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     );
+
+                    if (lastReadChapterId == chapter.id) {
+                      expandedVolume[volume.id] = true;
+                    }
                   }
 
                   v.add(
                     Card(
+                      elevation: expandedVolume[volume.id] ?? false ? 16 : 2,
                       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                       shadowColor: Colors.transparent,
                       clipBehavior: Clip.antiAlias,
@@ -198,6 +187,7 @@ class NovelPage extends StatelessWidget {
                           dividerColor: Colors.transparent, // if you want to remove the border
                         ),
                         child: ExpansionTile(
+                          initiallyExpanded: expandedVolume[volume.id] ?? false,
                           dense: true,
                           visualDensity: VisualDensity.comfortable,
                           title: Text(
@@ -206,7 +196,13 @@ class NovelPage extends StatelessWidget {
                           textColor: context.colors.primary,
                           expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
                           childrenPadding: const EdgeInsets.all(4),
+                          expansionAnimationStyle: AnimationStyle(curve: Easing.standard),
                           children: c,
+                          onExpansionChanged: (value) {
+                            setState(() {
+                              expandedVolume[volume.id] = value;
+                            });
+                          },
                         ),
                       ),
                     ),
@@ -217,7 +213,12 @@ class NovelPage extends StatelessWidget {
                   children: v,
                 );
               } else {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(8),
+                    child: CircularProgressIndicator(),
+                  ),
+                );
               }
             },
           ),
